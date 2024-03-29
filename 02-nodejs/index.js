@@ -3,16 +3,12 @@
 1 Obter o numero de telefone de um usuario a partir de seu id
 2 Obter o endereco do usuario pelo id
 */
-// importamos um módulo interno do node.js
+
 const util = require('util');
 const obterEnderecoAsync = util.promisify(obterEndereco);
 
 function obterUsuario(callback) {
-  // quando der algum problema -> reject(ERRO)
-  // quando sucesso -> RESOLVE
   return new Promise(function resolvePromise(resolve, reject) {
-    // return reject(new Error('DEU RUIM DE VERDADE!'));
-
     setTimeout(function () {
       return resolve({
         id: 1,
@@ -34,7 +30,7 @@ function obterTelefone(idUsuario, callback) {
   });
 }
 
-function obterEndereco(idEndereco, callback) {
+function obterEndereco(idUsuario, callback) {
   setTimeout(function () {
     return callback(null, {
       rua: 'dos bobos',
@@ -43,36 +39,29 @@ function obterEndereco(idEndereco, callback) {
   }, 2000);
 }
 
-const usuarioPromise = obterUsuario();
-usuarioPromise
-  .then(function (usuario) {
-    return obterTelefone(usuario.id).then(function resolverTelefone(resultado) {
-      return {
-        usuario: {
-          nome: usuario.nome,
-          id: usuario.id,
-        },
-        telefone: resultado,
-      };
-    });
-  })
-  .then(function (resultado) {
-    const endereco = obterEnderecoAsync(resultado.usuario.id);
-    return endereco.then(function resolveEndereco(endereco) {
-      return {
-        usuario: resultado.usuario,
-        telefone: resultado.telefone,
-        endereco: endereco,
-      };
-    });
-  })
-  .then(function (resultado) {
+//1o passo adicionar a palavra async -> automaticamente ela retornará uma promise
+main();
+async function main() {
+  try {
+    console.time('medida-promise');
+    const usuario = await obterUsuario();
+    // const telefone = await obterTelefone(usuario.id);
+    // const endereco = await obterEnderecoAsync(usuario.id);
+
+    const resultado = await Promise.all([
+      obterTelefone(usuario.id),
+      obterEnderecoAsync(usuario.id),
+    ]);
+    const endereco = resultado[1];
+    const telefone = resultado[0];
+
     console.log(`
-    Nome: ${resultado.usuario.nome},
-    Endereco: ${resultado.endereco.rua}, ${resultado.endereco.numero}
-    Telefone: (${resultado.telefone.ddd}) ${resultado.telefone.telefone}
+    Nome: ${usuario.nome},
+    Endereco: ${endereco.rua}, ${endereco.numero}
+    Telefone: (${telefone.ddd}) ${telefone.telefone}
     `);
-  })
-  .catch(function (error) {
+    console.timeEnd('medida-promise');
+  } catch (error) {
     console.error('DEU RUIM', error);
-  });
+  }
+}
