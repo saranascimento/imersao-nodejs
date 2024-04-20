@@ -26,13 +26,11 @@ class Database {
     const dados = await this.obterDadosArquivo();
     const id = heroi.id <= 2 ? heroi.id : Date.now();
 
-    // concat id + heroi
     const heroiComId = {
       id,
       ...heroi,
     };
 
-    // concat dados + heroiComId
     const dadosFinal = [...dados, heroiComId];
     const resultado = await this.escreverArquivo(dadosFinal);
     return resultado;
