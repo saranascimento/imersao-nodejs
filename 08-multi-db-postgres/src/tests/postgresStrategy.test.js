@@ -25,4 +25,13 @@ describe('Postgres Strategy', function () {
     delete result.id;
     assert.deepEqual(result, MOCK_HEROI_CADASTRAR);
   });
+
+  it('listar', async function () {
+    const [result] = await context.read({ nome: MOCK_HEROI_CADASTRAR.nome });
+    // pegar a primeira posicao
+    // const posicaoZero = result[0]
+    //const [posicao1, posicao2] = ['esse é o 1', 'esse é o 2']
+    delete result.id;
+    assert.deepEqual(result, MOCK_HEROI_CADASTRAR);
+  });
 });
