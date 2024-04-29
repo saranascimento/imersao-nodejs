@@ -18,6 +18,7 @@ describe('Postgres Strategy', function () {
 
   this.beforeAll(async function () {
     await context.connect();
+    await context.delete();
     await context.create(MOCK_HEROI_ATUALIZAR);
   });
 
@@ -50,15 +51,11 @@ describe('Postgres Strategy', function () {
     const [itemAtualizado] = await context.read({ id: itemAtualizar.id });
     assert.deepEqual(result, 1);
     assert.deepEqual(itemAtualizado.nome, novoItem.nome);
-    /*
-    No Javascript temos uma tecnca chamada rest/spread que é um metodo usado para mergear objetos ou separa-los
-    {
-      nome: 'Batman',
-      poder: 'Dinheiro'
-    },
-    {
-      dataNascimento: '1998-01-01'
-    }
-    */
+  });
+
+  it('remover por id', async function () {
+    const [item] = await context.read({});
+    const result = await context.delete(item.id);
+    assert.deepEqual(result, 1);
   });
 });
