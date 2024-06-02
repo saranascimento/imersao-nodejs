@@ -74,6 +74,11 @@ class MongoDB extends ICrud {
   create(item) {
     return this._herois.create(item);
   }
+
+  // skip = pula para o a posição do item escolhido
+  read(item, skip = 0, limit = 10) {
+    return this._herois.find(item).skip(skip).limit(limit);
+  }
 }
 
 module.exports = MongoDB;
