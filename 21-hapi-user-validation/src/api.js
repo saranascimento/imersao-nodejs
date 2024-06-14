@@ -5,11 +5,15 @@ const HeroiSchema = require('./db/strategies/mongodb/schemas/heroisSchema');
 const HeroRoute = require('./routes/heroRoutes');
 const AuthRoute = require('./routes/authRoutes');
 
+const Postgres = require('./db/strategies/postgres/postgres');
+const UsuariosSchema = require('./db/strategies/postgres/schemas/usuarioShema');
+
 const HapiSwagger = require('hapi-swagger');
 const Vision = require('@hapi/vision');
 const Inert = require('@hapi/inert');
 const JWT_SECRET = 'senha';
 const HapiJwt = require('hapi-auth-jwt2');
+const UsuarioSchema = require('./db/strategies/postgres/schemas/usuarioShema');
 
 const app = new Hapi.Server({
   port: 5000,
@@ -22,6 +26,15 @@ function mapRoutes(instance, methods) {
 async function main() {
   const connection = MongoDb.connect();
   const context = new Context(new MongoDb(connection, HeroiSchema));
+
+  const connectionPostgres = await Postgres.connect();
+  const usuarioSchema = await Postgres.defineModel(
+    connectionPostgres,
+    UsuarioSchema,
+  );
+  const contextPostgres = new Context(
+    new Postgres(connectionPostgres, usuarioSchema),
+  );
 
   const swaggerOptions = {
     info: {
@@ -41,7 +54,17 @@ async function main() {
 
   app.auth.strategy('jwt', 'jwt', {
     key: JWT_SECRET,
-    validate: (dado, request) => {
+    validate: async (dado, request) => {
+      const [result] = await contextPostgres.read({
+        username: dado.username.toLowerCase(),
+      });
+
+      if (!result) {
+        return {
+          isValid: false,
+        };
+      }
+
       return {
         isValid: true,
       };
@@ -52,7 +75,10 @@ async function main() {
 
   app.route([
     ...mapRoutes(new HeroRoute(context), HeroRoute.methods()),
-    ...mapRoutes(new AuthRoute(JWT_SECRET), AuthRoute.methods()),
+    ...mapRoutes(
+      new AuthRoute(JWT_SECRET, contextPostgres),
+      AuthRoute.methods(),
+    ),
   ]);
 
   await app.start();
